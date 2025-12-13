@@ -10,3 +10,6 @@ python manage.py collectstatic --no-input
 
 echo "Running migrations..."
 python manage.py migrate
+
+echo "Initializing admin user..."
+python manage.py init_admin
