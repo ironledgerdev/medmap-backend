@@ -10,6 +10,9 @@ User = get_user_model()
 
 @receiver(post_save, sender=User)
 def user_created(sender, instance, created, **kwargs):
+    if kwargs.get('raw', False):
+        return
+
     if created:
         # 1. Welcome Email to User
         try:
@@ -36,14 +39,17 @@ def user_created(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Booking)
 def booking_created(sender, instance, created, **kwargs):
+    if kwargs.get('raw', False):
+        return
+
     if created:
         # 1. Email to Patient
         try:
             send_mail(
                 subject='Booking Confirmation',
-                message=f'Hi {instance.patient.first_name},\n\nYour appointment with Dr. {instance.doctor.user.last_name} on {instance.appointment_date} at {instance.appointment_time} has been booked.\n\nStatus: {instance.status}\n\nBest regards,\nThe MedMap Team',
+                message=f'Hi {instance.user.first_name},\n\nYour appointment with Dr. {instance.doctor.user.last_name} on {instance.appointment_date} at {instance.appointment_time} has been booked.\n\nStatus: {instance.status}\n\nBest regards,\nThe MedMap Team',
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[instance.patient.email],
+                recipient_list=[instance.user.email],
                 fail_silently=True,
             )
         except Exception as e:
@@ -53,7 +59,7 @@ def booking_created(sender, instance, created, **kwargs):
         try:
             send_mail(
                 subject='New Appointment Booking',
-                message=f'Hi Dr. {instance.doctor.user.last_name},\n\nYou have a new appointment with {instance.patient.first_name} {instance.patient.last_name} on {instance.appointment_date} at {instance.appointment_time}.\n\nBest regards,\nThe MedMap Team',
+                message=f'Hi Dr. {instance.doctor.user.last_name},\n\nYou have a new appointment with {instance.user.first_name} {instance.user.last_name} on {instance.appointment_date} at {instance.appointment_time}.\n\nBest regards,\nThe MedMap Team',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[instance.doctor.user.email],
                 fail_silently=True,
@@ -68,7 +74,7 @@ def booking_created(sender, instance, created, **kwargs):
                 recipient=admin,
                 type='booking_created',
                 title='New Booking',
-                message=f'New booking: {instance.patient.first_name} with Dr. {instance.doctor.user.last_name}',
+                message=f'New booking: {instance.user.first_name} with Dr. {instance.doctor.user.last_name}',
                 data={'booking_id': instance.id}
             )
 
@@ -77,6 +83,6 @@ def booking_created(sender, instance, created, **kwargs):
             recipient=instance.doctor.user,
             type='booking_created',
             title='New Appointment',
-            message=f'New appointment with {instance.patient.first_name} {instance.patient.last_name}',
+            message=f'New appointment with {instance.user.first_name} {instance.user.last_name}',
             data={'booking_id': instance.id}
         )
