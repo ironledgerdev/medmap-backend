@@ -148,5 +148,5 @@ MERCHANT_KEY = os.getenv('MERCHANT_KEY')
 PASSPHRASE = os.getenv('PASSPHRASE')
 PAYFAST_SANDBOX = os.getenv('PAYFAST_SANDBOX', 'True') == 'True'
 
-BACKEND_URL = os.getenv('BACKEND_URL', 'https://medmap.co.za')
+BACKEND_URL = os.getenv('BACKEND_URL', 'https://medmap-backend-6t7y.onrender.com')
 PAYFAST_NOTIFY_URL = f"{BACKEND_URL}/api/payments/notify/"
