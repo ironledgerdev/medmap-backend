@@ -1,0 +1,151 @@
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+
+export interface User {
+  id: number;
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  role: 'patient' | 'doctor' | 'admin';
+  phone_number?: string;
+}
+
+export const api = {
+  async login(email: string, password: string): Promise<{ user?: User; token?: string; error?: any }> {
+    try {
+      // Django SimpleJWT expects 'username' by default
+      const response = await fetch(`${API_URL}/token/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: data };
+      }
+
+      // Store tokens
+      localStorage.setItem('access_token', data.access);
+      localStorage.setItem('refresh_token', data.refresh);
+
+      // Fetch user profile
+      const user = await this.getProfile(data.access);
+      return { user, token: data.access };
+    } catch (error) {
+      return { error };
+    }
+  },
+
+  async signup(data: any): Promise<{ user?: User; error?: any }> {
+    try {
+      // Assuming the backend UserViewSet allows create
+      const response = await fetch(`${API_URL}/users/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        return { error: responseData };
+      }
+
+      // Automatically login after signup if the backend doesn't return tokens directly
+      // Or return the user and let the frontend handle login
+      return { user: responseData };
+    } catch (error) {
+      return { error };
+    }
+  },
+
+  async getProfile(token: string): Promise<User> {
+    const response = await fetch(`${API_URL}/users/me/`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch profile');
+    }
+    
+    return response.json();
+  },
+
+  async getUserById(id: string): Promise<User | null> {
+    try {
+        const response = await this.request(`/users/${id}/`);
+        if (!response.ok) return null;
+        return response.json();
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+  },
+
+  async updateUser(id: string, data: Partial<User>): Promise<User | null> {
+      try {
+          const response = await this.request(`/users/${id}/`, {
+              method: 'PATCH',
+              body: JSON.stringify(data)
+          });
+          if (!response.ok) throw new Error('Update failed');
+          return response.json();
+      } catch (e) {
+          console.error(e);
+          return null;
+      }
+  },
+
+  async changePassword(oldPassword: string, newPassword: string) {
+      const response = await this.request('/users/change_password/', {
+          method: 'POST',
+          body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+      });
+      if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.old_password || 'Failed to change password');
+      }
+      return response.json();
+  },
+
+  logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+  },
+  
+  // Helper for generic authenticated requests
+  async request(endpoint: string, options: RequestInit = {}) {
+    let token = localStorage.getItem('access_token');
+    
+    // Simple token refresh logic could go here if needed
+    
+    const headers: Record<string, string> = {
+        ...options.headers as Record<string, string>,
+    };
+
+    if (token && token !== 'null' && token !== 'undefined') {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+    });
+
+    
+    return response;
+  }
+};
