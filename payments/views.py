@@ -76,21 +76,22 @@ class CreateMembershipPaymentView(APIView):
         data['signature'] = signature
         
         # Generate HTML Form
+        # Explicitly matching user's requested structure
         html_form = f"""
         <html>
         <head><title>Redirecting to PayFast...</title></head>
         <body>
-            <form id="payfast_form" action="{service.base_url}/eng/process" method="POST">
+            <form action="https://www.payfast.co.za/eng/process" method="POST">
         """
         
         for key, value in data.items():
             if value is not None:
-                html_form += f'<input type="hidden" name="{key}" value="{value}">'
+                html_form += f'<input type="hidden" name="{key}" value="{value}" />'
                 
         html_form += """
             </form>
             <script>
-                document.getElementById("payfast_form").submit();
+                document.forms[0].submit();
             </script>
         </body>
         </html>
