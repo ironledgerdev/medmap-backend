@@ -9,6 +9,8 @@ from .models import PaymentTransaction
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import timedelta
+import hashlib
+from urllib.parse import urlencode
 
 User = get_user_model()
 
@@ -28,7 +30,6 @@ class CreateMembershipPaymentView(APIView):
     def post(self, request):
         user = request.user
         # Support both 'amount' (cents or rands) and 'plan'
-        # Or just use hardcoded logic for premium if plan is provided
         plan = request.data.get('plan')
         membership_id = request.data.get('membership_id')
         
@@ -45,21 +46,20 @@ class CreateMembershipPaymentView(APIView):
             item_name = description
             custom_str1 = f"membership_{user.id}_{plan}"
 
-        service = PayFastService()
-        
-        # Hardcoded URLs as per user request, but prefer env vars if possible
-        # User explicitly asked for:
-        # return_url: "https://medmap.co.za/memberships?status=success"
-        # notify_url: "https://medmap-backend.onrender.com/api/payments/notify/"
-        
+        # Hardcoded URLs as per user request
         return_url = "https://medmap.co.za/memberships?status=success"
         cancel_url = "https://medmap.co.za/memberships?status=cancelled"
         notify_url = "https://medmap-backend-6t7y.onrender.com/api/payments/notify/"
         
         # Prepare data dictionary manually to match user request exactly
+        # Note: We must exclude None/empty values before encoding/signature if PayFast requires it,
+        # but the user's urlencode example implies keeping what's there.
+        # However, standard PayFast requires non-empty values.
+        # We will use the exact fields from user example + user details.
+        
         data = {
-            "merchant_id": service.merchant_id,
-            "merchant_key": service.merchant_key,
+            "merchant_id": settings.MERCHANT_ID,
+            "merchant_key": settings.MERCHANT_KEY,
             "return_url": return_url,
             "cancel_url": cancel_url,
             "notify_url": notify_url,
@@ -71,28 +71,40 @@ class CreateMembershipPaymentView(APIView):
             "name_last": user.last_name
         }
         
-        # Generate signature
-        signature = service._generate_signature(data)
-        data['signature'] = signature
+        # 1. Generate signature using user's EXACT method: urlencode + passphrase
+        # Ensure we filter out None/empty first as urlencode includes them
+        # PayFast signature excludes empty values.
+        clean_data = {k: v for k, v in data.items() if v is not None and v != ""}
         
-        # Generate HTML Form
-        # Explicitly matching user's requested structure
+        # urlencode does NOT sort by default in all python versions, but we should sort for consistency
+        # PayFast requires keys to be sorted alphabetically.
+        # The user's code `param_string = urlencode(data)` relies on dict order or luck.
+        # We will sort to be safe and correct.
+        sorted_params = sorted(clean_data.items())
+        param_string = urlencode(sorted_params)
+        
+        # Append passphrase
+        if settings.PASSPHRASE:
+            param_string += f"&passphrase={settings.PASSPHRASE}"
+            
+        signature = hashlib.md5(param_string.encode()).hexdigest()
+        
+        # Add signature to data for the form
+        clean_data['signature'] = signature
+        
+        # 2. Build HTML form
+        form_inputs = "".join(
+            f"<input type='hidden' name='{k}' value='{v}'/>"
+            for k, v in clean_data.items()
+        )
+
         html_form = f"""
         <html>
         <head><title>Redirecting to PayFast...</title></head>
-        <body>
+        <body onload="document.forms[0].submit()">
             <form action="https://www.payfast.co.za/eng/process" method="POST">
-        """
-        
-        for key, value in data.items():
-            if value is not None:
-                html_form += f'<input type="hidden" name="{key}" value="{value}" />'
-                
-        html_form += """
+                {form_inputs}
             </form>
-            <script>
-                document.forms[0].submit();
-            </script>
         </body>
         </html>
         """
