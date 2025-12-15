@@ -153,6 +153,37 @@ export const AdminDashboardContent: React.FC<{ overrideProfile?: any; bypassAuth
 
   const [debugInfo, setDebugInfo] = useState<{ pending?: any; memberships?: any; recentBookings?: any; stats?: any; errors: string[] }>({ errors: [] });
 
+  // Telecommunications
+  const [callData, setCallData] = useState({ agentNumber: '', customerNumber: '' });
+  const [isCalling, setIsCalling] = useState(false);
+
+  const handleTestCall = async () => {
+    if (!callData.agentNumber || !callData.customerNumber) {
+      toast({ title: "Error", description: "Please enter both numbers", variant: "destructive" });
+      return;
+    }
+    setIsCalling(true);
+    try {
+      const response = await api.request('/telecommunications/call/', {
+          method: 'POST',
+          body: JSON.stringify({
+              agent_number: callData.agentNumber,
+              customer_number: callData.customerNumber
+          })
+      });
+      const data = await response.json();
+      if (response.ok) {
+          toast({ title: "Success", description: "Call initiated! Your phone should ring shortly." });
+      } else {
+          toast({ title: "Error", description: data.error || "Failed to call", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setIsCalling(false);
+    }
+  };
+
   const fetchAdminData = async () => {
     setIsLoading(true);
     try {
@@ -517,13 +548,14 @@ export const AdminDashboardContent: React.FC<{ overrideProfile?: any; bypassAuth
 
         {/* Main Tabs */}
         <Tabs defaultValue="pending" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="pending">Pending ({stats.pendingApplications})</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="memberships">Memberships</TabsTrigger>
             <TabsTrigger value="create-user">Create User</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="role-management">Roles</TabsTrigger>
+            <TabsTrigger value="telecoms">Communication</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -616,6 +648,37 @@ export const AdminDashboardContent: React.FC<{ overrideProfile?: any; bypassAuth
 
           <TabsContent value="role-management">
             <AdminRoleManager />
+          </TabsContent>
+
+          <TabsContent value="telecoms">
+            <Card className="medical-hero-card max-w-xl mx-auto">
+              <CardHeader>
+                <CardTitle>Test Click-to-Call</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Agent Number (Your Phone)</Label>
+                  <Input 
+                    placeholder="+27..." 
+                    value={callData.agentNumber}
+                    onChange={(e) => setCallData(prev => ({ ...prev, agentNumber: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">The number that will ring first (e.g. Doctor/Admin).</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Customer Number (Patient Phone)</Label>
+                  <Input 
+                    placeholder="+27..." 
+                    value={callData.customerNumber}
+                    onChange={(e) => setCallData(prev => ({ ...prev, customerNumber: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">The number to connect to after the agent answers.</p>
+                </div>
+                <Button onClick={handleTestCall} disabled={isCalling} className="w-full btn-medical-primary">
+                  {isCalling ? "Dialing..." : "Initiate Call"}
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="settings">
