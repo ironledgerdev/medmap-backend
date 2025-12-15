@@ -153,7 +153,7 @@ BACKEND_URL = os.getenv('BACKEND_URL', 'https://medmap-backend-6t7y.onrender.com
 PAYFAST_NOTIFY_URL = f"{BACKEND_URL}/api/payments/notify/"
 
 # Twilio
-TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
-TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
-TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
-SUPPORT_PHONE_NUMBER = os.getenv('SUPPORT_PHONE_NUMBER')  # The number to forward inbound calls to
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '').strip()
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '').strip()
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '').strip()
+SUPPORT_PHONE_NUMBER = os.getenv('SUPPORT_PHONE_NUMBER', '').strip()  # The number to forward inbound calls to

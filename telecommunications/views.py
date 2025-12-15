@@ -50,7 +50,11 @@ class MakeCallView(APIView):
             })
         except Exception as e:
             logger.error(f"Error initiating call: {e}")
-            return Response({"error": str(e)}, status=500)
+            error_message = str(e)
+            # Add hint for common trial account error
+            if "verify" in error_message.lower() or "unverified" in error_message.lower():
+                error_message += " (Hint: On a Twilio Trial account, you can only call verified numbers. Check your Twilio Console 'Verified Caller IDs'.)"
+            return Response({"error": error_message}, status=500)
 
 class IncomingCallView(APIView):
     """
