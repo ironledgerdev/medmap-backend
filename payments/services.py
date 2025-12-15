@@ -14,23 +14,23 @@ class PayFastService:
 
     def _generate_signature(self, data):
         """
-        Generates a signature for the PayFast request.
+        Generates a signature for the PayFast request using the user's specific logic.
         """
-        # Sort keys to ensure consistent order for signature and URL
-        sorted_keys = sorted(data.keys())
         payload = ""
-        for key in sorted_keys:
+        for key in sorted(data.keys()):
             if data[key] is not None and data[key] != "":
+                # quote_plus handles spaces as + which is what PayFast wants
                 value = urllib.parse.quote_plus(str(data[key]))
                 payload += f"{key}={value}&"
         
-        # Remove trailing &
-        if payload.endswith('&'):
-            payload = payload[:-1]
-        
+        # User's logic: append passphrase to payload which ends with &
+        # This results in ...&key=val&passphrase=...
         if self.passphrase:
-            payload += f"&passphrase={urllib.parse.quote_plus(self.passphrase)}"
-            
+            payload += f"passphrase={urllib.parse.quote_plus(self.passphrase)}"
+        elif payload.endswith('&'):
+            # If no passphrase, remove trailing & (standard practice, though user didn't specify this case)
+            payload = payload[:-1]
+
         return hashlib.md5(payload.encode()).hexdigest()
 
     def create_payment_form_data(self, amount, item_name, return_url, cancel_url, email=None, first_name=None, last_name=None, custom_str1=None, notify_url=None):

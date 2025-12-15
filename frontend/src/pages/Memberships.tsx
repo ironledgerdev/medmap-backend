@@ -66,25 +66,27 @@ const Memberships = () => {
       const amountCents = 3900; // R39 quarterly
 
       // Call Django API for PayFast membership payment
-      const resp = await api.request('/payments/create-membership/', {
+      // The new endpoint returns an HTML form to auto-submit
+      const resp = await api.request('/payments/create/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: amountCents,
-          description: 'Premium membership (quarterly)',
+          membership_id: user.id, // Using user ID as membership ID for now
           plan: 'premium'
         }),
       });
 
       if (resp.ok) {
-        const json = await resp.json();
-        if (json?.success && json?.payment_url) {
-          window.location.href = json.payment_url;
-          return;
-        }
-        throw new Error(json?.error || 'Payment URL not returned');
+        // The response is an HTML page that autosubmits a form.
+        // We need to render this HTML. 
+        // Simplest way for a full page redirect experience is to write to document.
+        const html = await resp.text();
+        document.open();
+        document.write(html);
+        document.close();
+        return;
       } else {
         const text = await resp.text().catch(() => '');
         throw new Error(`Payment function HTTP ${resp.status}${text ? `: ${text}` : ''}`);
