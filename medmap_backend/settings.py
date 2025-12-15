@@ -156,3 +156,4 @@ PAYFAST_NOTIFY_URL = f"{BACKEND_URL}/api/payments/notify/"
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
+SUPPORT_PHONE_NUMBER = os.getenv('SUPPORT_PHONE_NUMBER')  # The number to forward inbound calls to
