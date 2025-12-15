@@ -171,13 +171,23 @@ export const AdminDashboardContent: React.FC<{ overrideProfile?: any; bypassAuth
               customer_number: callData.customerNumber
           })
       });
-      const data = await response.json();
+      
+      const text = await response.text();
+      let data;
+      try {
+          data = JSON.parse(text);
+      } catch (e) {
+          console.error("Non-JSON response from server:", text);
+          throw new Error(`Server returned non-JSON response (${response.status}). Check console for details.`);
+      }
+
       if (response.ok) {
           toast({ title: "Success", description: "Call initiated! Your phone should ring shortly." });
       } else {
           toast({ title: "Error", description: data.error || "Failed to call", variant: "destructive" });
       }
     } catch (e: any) {
+      console.error("Call failed", e);
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
       setIsCalling(false);
