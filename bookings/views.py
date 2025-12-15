@@ -43,4 +43,15 @@ class BookingViewSet(viewsets.ModelViewSet):
         return Response({'taken_slots': times}, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        doctor = serializer.validated_data.get('doctor')
+        booking_fee = 10.00
+        consultation_fee = doctor.consultation_fee if doctor else 0
+        
+        serializer.save(
+            user=self.request.user,
+            booking_fee=booking_fee,
+            consultation_fee=consultation_fee,
+            total_amount=booking_fee + consultation_fee,
+            status='pending',
+            payment_status='unpaid'
+        )

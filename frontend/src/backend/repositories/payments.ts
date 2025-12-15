@@ -13,7 +13,7 @@ export const PaymentsRepo = {
     },
 
     async initiateBookingPayment(bookingId: string | number, amount: number) {
-        const response = await api.request('/payments/payfast/initiate/', {
+        const response = await api.request('/payments/initiate/', {
             method: 'POST',
             body: JSON.stringify({
                 amount: amount,

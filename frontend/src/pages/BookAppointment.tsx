@@ -196,21 +196,21 @@ const BookAppointment = () => {
         status: 'pending',
       });
 
-      if (paymentMethod === 'card') {
-          try {
-             const paymentData = await PaymentsRepo.initiateBookingPayment(booking.id, doctor.consultation_fee);
-             if (paymentData.payment_url) {
-                 window.location.href = paymentData.payment_url;
-                 return;
-             }
-          } catch (payError) {
-             console.error("Payment initiation failed", payError);
-             toast({
-                 title: "Warning",
-                 description: "Booking created but payment initiation failed. Please pay from your bookings list.",
-                 variant: "default"
-             });
-          }
+      // Always initiate payment for R10 booking fee
+      try {
+         const bookingFee = 10.00;
+         const paymentData = await PaymentsRepo.initiateBookingPayment(booking.id, bookingFee);
+         if (paymentData.payment_url) {
+             window.location.href = paymentData.payment_url;
+             return;
+         }
+      } catch (payError) {
+         console.error("Payment initiation failed", payError);
+         toast({
+             title: "Warning",
+             description: "Booking created but payment initiation failed. Please check your bookings.",
+             variant: "default"
+         });
       }
 
       toast({
@@ -481,12 +481,12 @@ const BookAppointment = () => {
                       </div>
                       <div className="flex justify-between">
                         <span>Booking Fee (pay online)</span>
-                        <span>{formatCurrency(0)}</span>
+                        <span>{formatCurrency(10)}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between font-semibold">
                         <span>Amount Charged Now</span>
-                        <span className="text-primary">{formatCurrency(0)}</span>
+                        <span className="text-primary">{formatCurrency(10)}</span>
                       </div>
                     </div>
                   </CardContent>
