@@ -27,6 +27,9 @@ class MakeCallView(APIView):
             return Response({"error": "Both 'agent_number' and 'customer_number' are required"}, status=400)
 
         try:
+            if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_PHONE_NUMBER:
+                raise ValueError("Twilio credentials are not configured")
+
             client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
             # URL encoded customer number to pass as a query param
