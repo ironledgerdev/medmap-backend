@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'system',
     'chat',
     'medmap_notifications',
+    'telecommunications',
 ]
 
 # Add Whitenoise middleware
@@ -150,3 +151,8 @@ PAYFAST_SANDBOX = os.getenv('PAYFAST_SANDBOX', 'True') == 'True'
 
 BACKEND_URL = os.getenv('BACKEND_URL', 'https://medmap-backend-6t7y.onrender.com')
 PAYFAST_NOTIFY_URL = f"{BACKEND_URL}/api/payments/notify/"
+
+# Twilio
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
