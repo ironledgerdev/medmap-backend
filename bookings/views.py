@@ -45,7 +45,8 @@ class BookingViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         doctor = serializer.validated_data.get('doctor')
         booking_fee = 10.00
-        consultation_fee = doctor.consultation_fee if doctor else 0
+        # Use doctor.price as the consultation fee source
+        consultation_fee = doctor.price if doctor else 0
         
         serializer.save(
             user=self.request.user,

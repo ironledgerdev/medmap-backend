@@ -27,15 +27,18 @@ def user_created(sender, instance, created, **kwargs):
             print(f"Failed to send welcome email: {e}")
 
         # 2. Notification to Admin
-        admin_users = User.objects.filter(is_superuser=True)
-        for admin in admin_users:
-            Notification.objects.create(
-                recipient=admin,
-                type='user_registered',
-                title='New User Registration',
-                message=f'New user registered: {instance.first_name} {instance.last_name} ({instance.email})',
-                data={'user_id': instance.id}
-            )
+        try:
+            admin_users = User.objects.filter(is_superuser=True)
+            for admin in admin_users:
+                Notification.objects.create(
+                    recipient=admin,
+                    type='user_registered',
+                    title='New User Registration',
+                    message=f'New user registered: {instance.first_name} {instance.last_name} ({instance.email})',
+                    data={'user_id': instance.id}
+                )
+        except Exception as e:
+            print(f"Failed to create admin notification for user registration: {e}")
 
 @receiver(post_save, sender=Booking)
 def booking_created(sender, instance, created, **kwargs):
@@ -68,21 +71,27 @@ def booking_created(sender, instance, created, **kwargs):
             print(f"Failed to send booking email to doctor: {e}")
 
         # 3. Notification to Admin
-        admin_users = User.objects.filter(is_superuser=True)
-        for admin in admin_users:
-            Notification.objects.create(
-                recipient=admin,
-                type='booking_created',
-                title='New Booking',
-                message=f'New booking: {instance.user.first_name} with Dr. {instance.doctor.user.last_name}',
-                data={'booking_id': instance.id}
-            )
+        try:
+            admin_users = User.objects.filter(is_superuser=True)
+            for admin in admin_users:
+                Notification.objects.create(
+                    recipient=admin,
+                    type='booking_created',
+                    title='New Booking',
+                    message=f'New booking: {instance.user.first_name} with Dr. {instance.doctor.user.last_name}',
+                    data={'booking_id': instance.id}
+                )
+        except Exception as e:
+            print(f"Failed to create admin notification: {e}")
 
         # 4. In-app Notification to Doctor
-        Notification.objects.create(
-            recipient=instance.doctor.user,
-            type='booking_created',
-            title='New Appointment',
-            message=f'New appointment with {instance.user.first_name} {instance.user.last_name}',
-            data={'booking_id': instance.id}
-        )
+        try:
+            Notification.objects.create(
+                recipient=instance.doctor.user,
+                type='booking_created',
+                title='New Appointment',
+                message=f'New appointment with {instance.user.first_name} {instance.user.last_name}',
+                data={'booking_id': instance.id}
+            )
+        except Exception as e:
+            print(f"Failed to create doctor notification: {e}")
