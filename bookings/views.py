@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Booking
 from .serializers import BookingSerializer
+from decimal import Decimal
 
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
@@ -44,9 +45,9 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         doctor = serializer.validated_data.get('doctor')
-        booking_fee = 10.00
+        booking_fee = Decimal('10.00')
         # Use doctor.price as the consultation fee source
-        consultation_fee = doctor.price if doctor else 0
+        consultation_fee = doctor.price if doctor else Decimal('0.00')
         
         serializer.save(
             user=self.request.user,
