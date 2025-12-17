@@ -145,10 +145,10 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Payment Keys
-MERCHANT_ID = os.getenv('MERCHANT_ID', '').strip()
-MERCHANT_KEY = os.getenv('MERCHANT_KEY', '').strip()
-PASSPHRASE = os.getenv('PASSPHRASE', '').strip()
-PAYFAST_SANDBOX = os.getenv('PAYFAST_SANDBOX', 'True').strip() == 'True'
+MERCHANT_ID = os.getenv('MERCHANT_ID', '32963323').strip()
+MERCHANT_KEY = os.getenv('MERCHANT_KEY', '16d8hpaaicfyc').strip()
+PASSPHRASE = os.getenv('PASSPHRASE', 'MedMap.2025.').strip()
+PAYFAST_SANDBOX = os.getenv('PAYFAST_SANDBOX', 'False').strip() == 'True'
 
 BACKEND_URL = os.getenv('BACKEND_URL', 'https://medmap-backend-6t7y.onrender.com')
 PAYFAST_NOTIFY_URL = f"{BACKEND_URL}/api/payments/notify/"
