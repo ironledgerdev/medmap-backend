@@ -11,7 +11,7 @@ from .serializers import PaymentTransactionSerializer
 from memberships.models import Membership
 from bookings.models import Booking
 from django.contrib.auth import get_user_model
-from .services import generate_payfast_signature
+from .services import generate_payfast_signature, PayFastService
 
 User = get_user_model()
 
@@ -27,6 +27,8 @@ class CreateMembershipPaymentView(APIView):
 
     def post(self, request):
         user = request.user
+        service = PayFastService()
+        # Support both 'amount' (cents or rands) and 'plan'
         plan = request.data.get('plan')
         membership_id = request.data.get('membership_id')
 
@@ -46,10 +48,9 @@ class CreateMembershipPaymentView(APIView):
         return_url = "https://medmap.co.za/memberships?status=success"
         cancel_url = "https://medmap.co.za/memberships?status=cancelled"
         notify_url = settings.PAYFAST_NOTIFY_URL
-
         data = {
-            "merchant_id": settings.MERCHANT_ID,
-            "merchant_key": settings.MERCHANT_KEY,
+            "merchant_id": service.merchant_id,
+            "merchant_key": service.merchant_key,
             "return_url": return_url,
             "cancel_url": cancel_url,
             "notify_url": notify_url,
@@ -71,11 +72,12 @@ class CreateMembershipPaymentView(APIView):
             for k, v in clean_data.items()
         )
 
+        form_action = f"{service.base_url}/eng/process"
         html_form = f"""
         <html>
         <head><title>Redirecting to PayFast...</title></head>
         <body onload="document.forms[0].submit()">
-            <form action="https://www.payfast.co.za/eng/process" method="POST">
+            <form action="{form_action}" method="POST">
                 {form_inputs}
             </form>
         </body>
@@ -90,6 +92,7 @@ class InitiatePaymentView(APIView):
 
     def post(self, request):
         user = request.user
+        service = PayFastService()
         amount = request.data.get('amount')
         description = request.data.get('description') or request.data.get('item_name')
         booking_id = request.data.get('booking_id')
@@ -137,10 +140,11 @@ class InitiatePaymentView(APIView):
             for k, v in clean_data.items()
         )
 
+        form_action = f"{service.base_url}/eng/process"
         html_form = f"""
         <html>
         <body onload="document.forms[0].submit()">
-            <form method="POST" action="https://www.payfast.co.za/eng/process">
+            <form method="POST" action="{form_action}">
                 {form_inputs}
             </form>
         </body>
