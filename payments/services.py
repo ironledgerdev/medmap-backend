@@ -9,7 +9,8 @@ class PayFastService:
         self.merchant_key = settings.MERCHANT_KEY
         self.passphrase = settings.PASSPHRASE
         self.base_url = 'https://sandbox.payfast.co.za' if settings.PAYFAST_SANDBOX else 'https://www.payfast.co.za'
-        if settings.PAYFAST_SANDBOX and (not self.merchant_id or not self.merchant_key):
+        if settings.PAYFAST_SANDBOX:
+            # Always use test credentials in sandbox mode
             self.merchant_id = '10000100'
             self.merchant_key = '46f0cd694581a'
 
