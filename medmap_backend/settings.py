@@ -124,10 +124,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
 # CORS
-CORS_ALLOW_ALL_ORIGINS = True # For development
+CORS_ALLOW_ALL_ORIGINS = False 
 CORS_ALLOWED_ORIGINS = [
     "https://medmap.co.za",
     "http://localhost:3000",
+    "http://localhost:5173",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
