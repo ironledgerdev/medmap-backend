@@ -71,25 +71,11 @@ class CreateMembershipPaymentView(APIView):
         clean_data = {k: v for k, v in data.items() if v is not None and v != ""}
         clean_data['signature'] = generate_payfast_signature(clean_data)
 
-        # Build HTML form
-        form_inputs = "".join(
-            f"<input type='hidden' name='{k}' value='{v}'/>"
-            for k, v in clean_data.items()
-        )
-
-        form_action = f"{service.base_url}/eng/process"
-        html_form = f"""
-        <html>
-        <head><title>Redirecting to PayFast...</title></head>
-        <body onload="document.forms[0].submit()">
-            <form action="{form_action}" method="POST">
-                {form_inputs}
-            </form>
-        </body>
-        </html>
-        """
-
-        return HttpResponse(html_form)
+        # Return JSON instead of HTML form
+        return Response({
+            "payment_url": f"{service.base_url}/eng/process",
+            "payment_data": clean_data
+        })
 
 
 class InitiatePaymentView(APIView):
@@ -139,25 +125,11 @@ class InitiatePaymentView(APIView):
         clean_data = {k: v for k, v in data.items() if v is not None and v != ""}
         clean_data['signature'] = generate_payfast_signature(clean_data)
 
-        # Build HTML form
-        form_inputs = "".join(
-            f"<input type='hidden' name='{k}' value='{v}'/>"
-            for k, v in clean_data.items()
-        )
-
-        form_action = f"{service.base_url}/eng/process"
-        html_form = f"""
-        <html>
-        <head><title>Redirecting to PayFast...</title></head>
-        <body onload="document.forms[0].submit()">
-            <form method="POST" action="{form_action}">
-                {form_inputs}
-            </form>
-        </body>
-        </html>
-        """
-
-        return HttpResponse(html_form)
+        # Return JSON instead of HTML form
+        return Response({
+            "payment_url": f"{service.base_url}/eng/process",
+            "payment_data": clean_data
+        })
 
 
 class PayFastNotifyView(APIView):
