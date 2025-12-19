@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { api } from '@/lib/django-api';
+import { PaymentsRepo } from '@/backend/repositories/payments';
 
 const Memberships = () => {
   const plans = [
@@ -63,36 +63,23 @@ const Memberships = () => {
         window.dispatchEvent(new Event('openAuthModal'));
         return;
       }
-      const amountCents = 3900; // R39 quarterly
 
-      // Call Django API for PayFast membership payment
-      // The new endpoint returns an HTML form to auto-submit
-      const resp = await api.request('/payments/create/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          membership_id: user.id, // Using user ID as membership ID for now
-          plan: 'premium'
-        }),
+      // Use the PaymentsRepo which will handle the redirect
+      await PaymentsRepo.initiateMembershipPayment('premium');
+      
+      // If we reach here, something went wrong with the redirect
+      toast({ 
+        title: 'Payment Initiated', 
+        description: 'Redirecting to payment gateway...', 
+        variant: 'default' 
       });
-
-      if (resp.ok) {
-        // The response is an HTML page that autosubmits a form.
-        // We need to render this HTML. 
-        // Simplest way for a full page redirect experience is to write to document.
-        const html = await resp.text();
-        document.open();
-        document.write(html);
-        document.close();
-        return;
-      } else {
-        const text = await resp.text().catch(() => '');
-        throw new Error(`Payment function HTTP ${resp.status}${text ? `: ${text}` : ''}`);
-      }
     } catch (err: any) {
-      toast({ title: 'Checkout Failed', description: err.message || 'Unable to start checkout', variant: 'destructive' });
+      console.error('Checkout error:', err);
+      toast({ 
+        title: 'Checkout Failed', 
+        description: err.message || 'Unable to start checkout', 
+        variant: 'destructive' 
+      });
     }
   };
 
