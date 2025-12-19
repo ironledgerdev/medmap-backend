@@ -28,7 +28,7 @@ const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const BookingSuccess = lazy(() => import("./pages/BookingSuccess"));
 const PayFastSuccess = lazy(() => import("./pages/PayFastSuccess"));
 const PayFastCancel = lazy(() => import("./pages/PayFastCancel"));
-const BookAppointments = lazy(() => import("./pages/BookAppointments"));
+const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const Telemedicine = lazy(() => import("./pages/Telemedicine"));
 const DoctorPortal = lazy(() => import("./pages/DoctorPortal"));
 const PracticeManagement = lazy(() => import("./pages/PracticeManagement"));
@@ -95,9 +95,9 @@ const App = () => {
                         <Route path="/doctor-enrollment" element={<DoctorEnrollment />} />
                         <Route path="/DoctorEnrollment" element={<Navigate to="/doctor-enrollment" replace />} />
                         <Route path="/doctorEnrollment" element={<Navigate to="/doctor-enrollment" replace />} />
-                        <Route path="/book-appointments" element={<BookAppointments />} />
-                        <Route path="/BookAppointment" element={<Navigate to="/book-appointments" replace />} />
-                        <Route path="/book-appointment" element={<Navigate to="/book-appointments" replace />} />
+                        <Route path="/book-appointment" element={<BookAppointment />} />
+                        <Route path="/BookAppointment" element={<Navigate to="/book-appointment" replace />} />
+                        <Route path="/book-appointment" element={<Navigate to="/book-appointment" replace />} />
                         <Route path="/telemedicine" element={<Telemedicine />} />
                         <Route path="/doctor-portal" element={<DoctorPortal />} />
                         <Route path="/practice-management" element={<PracticeManagement />} />
