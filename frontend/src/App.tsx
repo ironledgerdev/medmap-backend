@@ -28,7 +28,6 @@ const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const BookingSuccess = lazy(() => import("./pages/BookingSuccess"));
 const PayFastSuccess = lazy(() => import("./pages/PayFastSuccess"));
 const PayFastCancel = lazy(() => import("./pages/PayFastCancel"));
-const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const Telemedicine = lazy(() => import("./pages/Telemedicine"));
 const DoctorPortal = lazy(() => import("./pages/DoctorPortal"));
 const PracticeManagement = lazy(() => import("./pages/PracticeManagement"));
