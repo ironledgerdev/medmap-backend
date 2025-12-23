@@ -12,6 +12,7 @@ from memberships.models import Membership
 from bookings.models import Booking
 from django.contrib.auth import get_user_model
 from .services import generate_payfast_signature, PayFastService
+import traceback
 
 User = get_user_model()
 
@@ -26,121 +27,132 @@ class CreateMembershipPaymentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        user = request.user
-        service = PayFastService()
-        
-        plan = request.data.get('plan')
-        membership_id = request.data.get('membership_id')
+        try:
+            user = request.user
+            service = PayFastService()
+            
+            plan = request.data.get('plan')
+            membership_id = request.data.get('membership_id')
 
-        # Default values for Premium plan
-        if plan == 'premium':
-            amount_rands = 39.00
-            item_name = "Premium membership (quarterly)"
-            custom_str1 = f"membership_{user.id}_premium"
-        else:
-            # Fallback or other plans
-            amount = request.data.get('amount', 0)
-            description = request.data.get('description', 'Membership')
-            amount_rands = float(amount) / 100 if float(amount) > 1000 else float(amount)
-            item_name = description
-            custom_str1 = f"membership_{user.id}_{plan}"
+            # Default values for Premium plan
+            if plan == 'premium':
+                amount_rands = 39.00
+                item_name = "Premium membership (quarterly)"
+                custom_str1 = f"membership_{membership_id}_premium"
+            else:
+                # Fallback or other plans
+                amount = request.data.get('amount', 0)
+                description = request.data.get('description', 'Membership')
+                amount_rands = float(amount) / 100 if float(amount) > 1000 else float(amount)
+                item_name = description
+                custom_str1 = f"membership_{user.id}_{plan}"
 
-        return_url = "https://medmap.co.za/memberships?status=success"
-        cancel_url = "https://medmap.co.za/memberships?status=cancelled"
-        notify_url = settings.PAYFAST_NOTIFY_URL
-        
-        data = {
-            "merchant_id": service.merchant_id,
-            "merchant_key": service.merchant_key,
-            "return_url": return_url,
-            "cancel_url": cancel_url,
-            "notify_url": notify_url,
-            "amount": f"{amount_rands:.2f}",
-            "item_name": item_name,
-            "custom_str1": custom_str1,
-            "email_address": user.email,
-        }
-        
-        # Add name fields only if they exist
-        if user.first_name:
-            data["name_first"] = user.first_name
-        if user.last_name:
-            data["name_last"] = user.last_name
+            return_url = "https://medmap.co.za/memberships?status=success"
+            cancel_url = "https://medmap.co.za/memberships?status=cancelled"
+            notify_url = settings.PAYFAST_NOTIFY_URL
+            
+            data = {
+                "merchant_id": service.merchant_id,
+                "merchant_key": service.merchant_key,
+                "return_url": return_url,
+                "cancel_url": cancel_url,
+                "notify_url": notify_url,
+                "amount": f"{amount_rands:.2f}",
+                "item_name": item_name,
+                "custom_str1": custom_str1,
+                "email_address": user.email,
+            }
+            
+            # Add name fields only if they exist
+            if user.first_name:
+                data["name_first"] = user.first_name
+            if user.last_name:
+                data["name_last"] = user.last_name
 
-        # Remove empty values
-        clean_data = {k: v for k, v in data.items() if v is not None and v != ""}
-        clean_data['signature'] = generate_payfast_signature(clean_data)
+            # Remove empty values
+            clean_data = {k: v for k, v in data.items() if v is not None and v != ""}
+            clean_data['signature'] = generate_payfast_signature(clean_data)
 
-        # Debug logging
-        print("=" * 80)
-        print("PAYFAST MEMBERSHIP PAYMENT DEBUG")
-        print(f"Merchant ID: {service.merchant_id}")
-        print(f"Amount: {clean_data['amount']}")
-        print(f"Sandbox Mode: {service.sandbox}")
-        print(f"Payment URL: {service.base_url}/eng/process")
-        print(f"Signature: {clean_data['signature']}")
-        print(f"All data keys: {list(clean_data.keys())}")
-        print("=" * 80)
+            # Debug logging
+            print("=" * 80)
+            print("PAYFAST MEMBERSHIP PAYMENT DEBUG")
+            print(f"Merchant ID: {service.merchant_id}")
+            print(f"Amount: {clean_data['amount']}")
+            print(f"Sandbox Mode: {settings.PAYFAST_SANDBOX}")
+            print(f"Payment URL: {service.base_url}/eng/process")
+            print(f"Signature: {clean_data['signature']}")
+            print(f"All data keys: {list(clean_data.keys())}")
+            print("=" * 80)
 
-        # Return JSON instead of HTML form
-        return Response({
-            "payment_url": f"{service.base_url}/eng/process",
-            "payment_data": clean_data
-        })
+            # Return JSON instead of HTML form
+            return Response({
+                "payment_url": f"{service.base_url}/eng/process",
+                "payment_data": clean_data
+            })
+
+        except Exception as e:
+            print(f"Error in CreateMembershipPaymentView: {e}")
+            traceback.print_exc()
+            return Response({"error": f"Internal Error: {str(e)}"}, status=500)
 
 
 class InitiatePaymentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        user = request.user
-        service = PayFastService()
-        amount = request.data.get('amount')
-        description = request.data.get('description') or request.data.get('item_name')
-        booking_id = request.data.get('booking_id')
-
-        if not amount or not description:
-            return Response({"error": "Amount and description are required"}, status=400)
-
         try:
-            amount_val = float(amount)
-            if amount_val > 1000:  # assume cents
-                amount_val /= 100
-        except ValueError:
-            return Response({"error": "Invalid amount"}, status=400)
+            user = request.user
+            service = PayFastService()
+            amount = request.data.get('amount')
+            description = request.data.get('description') or request.data.get('item_name')
+            booking_id = request.data.get('booking_id')
 
-        return_url = "https://medmap.co.za/bookings?status=success"
-        cancel_url = "https://medmap.co.za/bookings?status=cancelled"
-        notify_url = settings.PAYFAST_NOTIFY_URL
+            if not amount or not description:
+                return Response({"error": "Amount and description are required"}, status=400)
 
-        data = {
-            "merchant_id": service.merchant_id,
-            "merchant_key": service.merchant_key,
-            "return_url": return_url,
-            "cancel_url": cancel_url,
-            "notify_url": notify_url,
-            "amount": f"{amount_val:.2f}",
-            "item_name": description,
-            "email_address": user.email,
-        }
-        
-        # Add optional fields
-        if booking_id:
-            data["custom_str1"] = f"booking_{booking_id}"
-        if user.first_name:
-            data["name_first"] = user.first_name
-        if user.last_name:
-            data["name_last"] = user.last_name
+            try:
+                amount_val = float(amount)
+                if amount_val > 1000:  # assume cents
+                    amount_val /= 100
+            except ValueError:
+                return Response({"error": "Invalid amount"}, status=400)
 
-        # Remove empty values
-        clean_data = {k: v for k, v in data.items() if v is not None and v != ""}
-        clean_data['signature'] = generate_payfast_signature(clean_data)
+            return_url = "https://medmap.co.za/bookings?status=success"
+            cancel_url = "https://medmap.co.za/bookings?status=cancelled"
+            notify_url = settings.PAYFAST_NOTIFY_URL
 
-        # Return JSON instead of HTML form
-        return Response({
-            "payment_url": f"{service.base_url}/eng/process",
-            "payment_data": clean_data
-        })
+            data = {
+                "merchant_id": service.merchant_id,
+                "merchant_key": service.merchant_key,
+                "return_url": return_url,
+                "cancel_url": cancel_url,
+                "notify_url": notify_url,
+                "amount": f"{amount_val:.2f}",
+                "item_name": description,
+                "email_address": user.email,
+            }
+            
+            # Add optional fields
+            if booking_id:
+                data["custom_str1"] = f"booking_{booking_id}"
+            if user.first_name:
+                data["name_first"] = user.first_name
+            if user.last_name:
+                data["name_last"] = user.last_name
+
+            # Remove empty values
+            clean_data = {k: v for k, v in data.items() if v is not None and v != ""}
+            clean_data['signature'] = generate_payfast_signature(clean_data)
+
+            # Return JSON instead of HTML form
+            return Response({
+                "payment_url": f"{service.base_url}/eng/process",
+                "payment_data": clean_data
+            })
+        except Exception as e:
+            print(f"Error in InitiatePaymentView: {e}")
+            traceback.print_exc()
+            return Response({"error": f"Internal Error: {str(e)}"}, status=500)
 
 
 class PayFastNotifyView(APIView):
