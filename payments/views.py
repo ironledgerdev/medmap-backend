@@ -71,6 +71,17 @@ class CreateMembershipPaymentView(APIView):
         clean_data = {k: v for k, v in data.items() if v is not None and v != ""}
         clean_data['signature'] = generate_payfast_signature(clean_data)
 
+        # Debug logging
+        print("=" * 80)
+        print("PAYFAST MEMBERSHIP PAYMENT DEBUG")
+        print(f"Merchant ID: {service.merchant_id}")
+        print(f"Amount: {clean_data['amount']}")
+        print(f"Sandbox Mode: {service.sandbox}")
+        print(f"Payment URL: {service.base_url}/eng/process")
+        print(f"Signature: {clean_data['signature']}")
+        print(f"All data keys: {list(clean_data.keys())}")
+        print("=" * 80)
+
         # Return JSON instead of HTML form
         return Response({
             "payment_url": f"{service.base_url}/eng/process",
